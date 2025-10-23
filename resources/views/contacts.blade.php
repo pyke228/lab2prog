@@ -1,15 +1,15 @@
 @extends('layouts.app')
 
-@section('title', 'Контакты')
-
+@section('title', 'Контакты')  
 @section('content')
-    <h1>Контакты</h1>
-
-    <ul class="list-group">
-        @foreach($contacts as $key => $value)
-            <li class="list-group-item">
-                <strong>{{ $key }}:</strong> {{ $value }}
-            </li>
-        @endforeach
-    </ul>
+<div class="row">
+    <div class="col-12">
+        <h1>Контакты</h1>
+        <ul>
+            <li>Телефон: +7 (999) 123-45-67</li>
+            <li>Email: example@mail.ru</li>
+            <li>Адрес: Москва</li>
+        </ul>
+    </div>
+</div>
 @endsection

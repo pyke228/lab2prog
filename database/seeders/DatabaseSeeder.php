@@ -2,21 +2,39 @@
 
 namespace Database\Seeders;
 
-// use Illuminate\Database\Console\Seeds\WithoutModelEvents;
+use App\Models\User;
+use App\Models\Article;
 use Illuminate\Database\Seeder;
 
 class DatabaseSeeder extends Seeder
 {
-    /**
-     * Seed the application's database.
-     */
-    public function run(): void
+    public function run()
     {
-        // \App\Models\User::factory(10)->create();
+        $this->call([
+            RoleSeeder::class,
+        ]);
+        // Создаем пользователя с другим email
+        $user = User::create([
+            'name' => 'Admin User',
+            'email' => 'admin2@mail.ru', // другой email
+            'password' => bcrypt('password'),
+        ]);
 
-        // \App\Models\User::factory()->create([
-        //     'name' => 'Test User',
-        //     'email' => 'test@example.com',
-        // ]);
+        // Создаем статьи вручную
+        Article::create([
+            'title' => 'Первая статья',
+            'content' => 'Содержание первой статьи...',
+            'preview_image' => 'preview.jpg',
+            'full_image' => 'full.jpeg',
+            'user_id' => $user->id,
+        ]);
+
+        Article::create([
+            'title' => 'Вторая статья', 
+            'content' => 'Содержание второй статьи...',
+            'preview_image' => 'preview_2.jpg',
+            'full_image' => 'full_2.jpeg', 
+            'user_id' => $user->id,
+        ]);
     }
 }
