@@ -12,13 +12,18 @@ use App\Jobs\VeryLongJob;
 use App\Events\NewArticleEvent;
 use App\Notifications\NewArticleNotification;
 use Illuminate\Support\Facades\Notification;
+use Illuminate\Support\Facades\Cache;
 
 
 class ArticleController extends Controller
 {
     public function index()
     {
-        $articles = Article::with('user')->latest()->paginate(10);
+        $page = request('page', 1);
+        $articles = Cache::remember('articles_page_' . $page, 3600, function () {
+            return Article::with('user')->latest()->paginate(10);
+        });
+
         return view('articles.index', compact('articles'));
     }
 
@@ -41,34 +46,26 @@ class ArticleController extends Controller
             'user_id' => Auth::id()
         ]);
 
-        \Log::info('=== START NOTIFICATION PROCESS ===');
-        \Log::info('Article created: ' . $article->title);
+        event(new NewArticleEvent($article));
+        VeryLongJob::dispatch($article);
 
-        // Проверяем читателей
         $readers = \App\Models\User::where('role_id', 2)->get();
-        \Log::info('Readers found: ' . $readers->count());
-        \Log::info('Reader emails: ' . $readers->pluck('email')->implode(', '));
+        Notification::send($readers, new NewArticleNotification($article));
 
-        // Отправляем уведомления
-        foreach ($readers as $reader) {
-            \Log::info('Sending to: ' . $reader->email);
-            try {
-                $reader->notify(new \App\Notifications\NewArticleNotification($article));
-                \Log::info('✓ Notification sent to: ' . $reader->email);
-            } catch (\Exception $e) {
-                \Log::error('✗ Error sending to ' . $reader->email . ': ' . $e->getMessage());
-            }
-        }
-
-        \Log::info('=== END NOTIFICATION PROCESS ===');
+        Cache::forget('articles_page_1');
+        Cache::forget('articles_page_2');
+        Cache::forget('articles_page_3');
 
         return redirect()->route('articles.index')
-            ->with('success', 'Статья создана! Уведомления отправлены!');
+            ->with('success', 'Статья создана! Кэш обновлен!');
     }
 
     public function show(Article $article)
     {
-        $article->load(['comments.user', 'user']);
+        $article = Cache::rememberForever('article_' . $article->id, function () use ($article) {
+            return $article->load(['comments.user', 'user']);
+        });
+
         return view('articles.show', compact('article'));
     }
 
@@ -85,13 +82,24 @@ class ArticleController extends Controller
         ]);
 
         $article->update($validated);
-        return redirect()->route('articles.index');
+
+        Cache::forget('article_' . $article->id);
+        Cache::forget('articles_page_1');
+        Cache::forget('articles_page_2');
+
+        return redirect()->route('articles.index')
+            ->with('success', 'Статья обновлена! Кэш очищен!');
     }
 
     public function destroy(Article $article)
     {
         $article->delete();
-        return redirect()->route('articles.index');
+
+        // ПОЛНОСТЬЮ ОЧИЩАЕМ КЭШ
+        Cache::flush();
+
+        return redirect()->route('articles.index')
+            ->with('success', 'Статья удалена! Кэш очищен!');
     }
 
     public function __construct()
