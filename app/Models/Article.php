@@ -10,7 +10,11 @@ class Article extends Model
     use HasFactory;
 
     protected $fillable = [
-        'title', 'content', 'preview_image', 'full_image', 'user_id'
+        'title', 
+        'content', 
+        'preview_image', 
+        'full_image', 
+        'user_id'
     ];
 
     public function user()
@@ -18,7 +22,11 @@ class Article extends Model
         return $this->belongsTo(User::class);
     }
 
-    // ДОБАВЬ ЭТО ОТНОШЕНИЕ
+    public function views()
+    {
+        return $this->hasMany(ArticleView::class);
+    }
+
     public function comments()
     {
         return $this->hasMany(Comment::class);

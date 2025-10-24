@@ -7,21 +7,22 @@ use Illuminate\Foundation\Console\Kernel as ConsoleKernel;
 
 class Kernel extends ConsoleKernel
 {
-    /**
-     * Define the application's command schedule.
-     */
-    protected function schedule(Schedule $schedule): void
+    protected $commands = [
+        Commands\SendDailyStats::class,
+    ];
+
+    protected function schedule(Schedule $schedule)
     {
-        $schedule->command('app:stat-command')->everyMinute();
+        // Отправляем статистику каждый день в 18:00
+        $schedule->command('stats:daily')->dailyAt('18:00');
+        
+        // Для тестирования - каждую минуту
+        // $schedule->command('stats:daily')->everyMinute();
     }
 
-    /**
-     * Register the commands for the application.
-     */
-    protected function commands(): void
+    protected function commands()
     {
         $this->load(__DIR__.'/Commands');
-
         require base_path('routes/console.php');
     }
 }

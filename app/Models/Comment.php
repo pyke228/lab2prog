@@ -2,11 +2,14 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class Comment extends Model
 {
-    protected $fillable = ['content', 'moderated', 'user_id', 'article_id'];
+    use HasFactory;
+
+    protected $fillable = ['content', 'user_id', 'article_id', 'is_moderated'];
 
     public function user()
     {
@@ -18,13 +21,8 @@ class Comment extends Model
         return $this->belongsTo(Article::class);
     }
 
-    public function scopeModerated($query)
-    {
-        return $query->where('moderated', true);
-    }
-
     public function scopePending($query)
     {
-        return $query->where('moderated', false);
+        return $query->where('is_moderated', false);
     }
 }
